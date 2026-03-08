@@ -17,6 +17,7 @@ export async function GET() {
       splashImageUrl: `${URL}/splash-v2.png`,
       splashBackgroundColor: '#1a1a2e',
       primaryCategory: 'entertainment',
+      tags: ['music', 'film', 'media browser', 'content'],
       webhookUrl: `${URL}/api/webhook`,
     },
   });
