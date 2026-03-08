@@ -19,7 +19,7 @@ export async function GET() {
       splashImageUrl: `${URL}/splash-v2.png`,
       splashBackgroundColor: '#1a1a2e',
       primaryCategory: 'entertainment',
-      tags: ['music', 'film', 'media browser', 'content'],
+      tags: ['music', 'film', 'media', 'content', 'video'],
       tagline: 'Mix stems. Support creators.',
       heroImageUrl: `${URL}/hero-image.png`,
       screenshotUrls: [`${URL}/screenshot-1.png`],
