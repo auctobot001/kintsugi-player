@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { coinbaseWallet } from 'wagmi/connectors';
 import './globals.css';
@@ -125,9 +124,6 @@ export default function KintsugiPlayer() {
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
 
-  // Initialize MiniKit
-  const { setFrameReady } = useMiniKit();
-  useEffect(() => { setFrameReady(); }, [setFrameReady]);
 
   const fmt = (s: number) => {
     const m = Math.floor(s / 60);

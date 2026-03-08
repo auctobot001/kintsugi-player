@@ -1,7 +1,5 @@
 "use client";
 import { type ReactNode } from "react";
-import { OnchainKitProvider } from "@coinbase/onchainkit";
-import { MiniKitProvider } from "@coinbase/onchainkit/minikit";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { base } from "wagmi/chains";
 import { coinbaseWallet } from "wagmi/connectors";
@@ -19,18 +17,32 @@ const wagmiConfig = createConfig({
 
 const queryClient = new QueryClient();
 
+function OnchainProviders({ children }: { children: ReactNode }) {
+  try {
+    const { OnchainKitProvider } = require("@coinbase/onchainkit");
+    const { MiniKitProvider } = require("@coinbase/onchainkit/minikit");
+    return (
+      <OnchainKitProvider
+        apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || ""}
+        chain={base}
+      >
+        <MiniKitProvider>
+          {children}
+        </MiniKitProvider>
+      </OnchainKitProvider>
+    );
+  } catch {
+    return <>{children}</>;
+  }
+}
+
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <OnchainKitProvider
-          apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-          chain={base}
-        >
-          <MiniKitProvider>
-            {children}
-          </MiniKitProvider>
-        </OnchainKitProvider>
+        <OnchainProviders>
+          {children}
+        </OnchainProviders>
       </QueryClientProvider>
     </WagmiProvider>
   );
