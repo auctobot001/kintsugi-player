@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { coinbaseWallet } from 'wagmi/connectors';
+import sdk from '@farcaster/miniapp-sdk';
 import './globals.css';
 
 /* ── Types ── */
@@ -275,6 +276,15 @@ export default function KintsugiPlayer() {
     if (playing) drawViz();
     return () => cancelAnimationFrame(animFrameRef.current);
   }, [playing, drawViz]);
+
+  /* ── Signal MiniApp ready ── */
+  useEffect(() => {
+    try {
+      sdk.actions.ready();
+    } catch {
+      // Not in MiniApp context — ignore
+    }
+  }, []);
 
   /* ── Stem volume/mute/solo ── */
   const updateStemGain = useCallback((newStems: Stem[]) => {
