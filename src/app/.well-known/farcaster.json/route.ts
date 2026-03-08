@@ -10,6 +10,8 @@ export async function GET() {
     frame: {
       version: '1',
       name: 'Kintsugi Player',
+      subtitle: 'Decentralized Stem Player',
+      description: 'Mix individual stems, discover artists, and support creators with USDC payments on Base. Built for the film3 production pipeline.',
       homeUrl: URL,
       iconUrl: `${URL}/icon.png`,
       imageUrl: `${URL}/og-image.png`,
@@ -18,7 +20,13 @@ export async function GET() {
       splashBackgroundColor: '#1a1a2e',
       primaryCategory: 'entertainment',
       tags: ['music', 'film', 'media browser', 'content'],
+      tagline: 'Mix stems. Support creators.',
+      heroImageUrl: `${URL}/hero-image.png`,
+      screenshotUrls: [`${URL}/screenshot-1.png`],
       webhookUrl: `${URL}/api/webhook`,
+      ogTitle: 'Kintsugi Player',
+      ogDescription: 'Decentralized stem player for music. Mix tracks, discover artists, pay with USDC.',
+      ogImageUrl: `${URL}/og-image.png`,
     },
   });
 }
