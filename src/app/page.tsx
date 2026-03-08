@@ -3,33 +3,116 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import './globals.css';
 
-interface Track {
-  id: string;
+/* ── Types ── */
+interface Stem {
   name: string;
-  url: string;
-  duration: number;
+  path: string;
+  volume: number;
+  muted: boolean;
+  solo: boolean;
 }
 
+interface SongEntry {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  description: string;
+  stems: { name: string; path: string }[];
+  coverPath: string;
+  ipfsCid: string;
+  ipfsImage: string;
+  collection: string;
+  royalty: number;
+}
+
+interface StemAudio {
+  el: HTMLAudioElement;
+  source: MediaElementAudioSourceNode;
+  gain: GainNode;
+}
+
+/* ── Song Library (IPFS provenance) ── */
+const LIBRARY: SongEntry[] = [
+  {
+    id: 'suddenly',
+    title: 'Suddenly (Remix)',
+    artist: 'Bootie Brown ft. Amy Correa Bell',
+    album: 'UltraHipFunkWave',
+    description: 'First collection ever minted by Bootie Brown. Featured in PROCESS Docuseries by Pattern Integrity Films.',
+    stems: [
+      { name: 'Vocal', path: '/audio/suddenly/vocal.mp3' },
+      { name: 'Rap', path: '/audio/suddenly/rap.mp3' },
+      { name: 'Drums', path: '/audio/suddenly/drums.mp3' },
+      { name: 'Bass', path: '/audio/suddenly/bass.mp3' },
+      { name: 'Synth', path: '/audio/suddenly/synth.mp3' },
+      { name: 'Perc & FX', path: '/audio/suddenly/perc-n-fx.mp3' },
+    ],
+    coverPath: '/audio/suddenly/cover.jpeg',
+    ipfsCid: 'QmbjqQauZxxA2Q9F5e6bAoAZf85HZxyzUyvRs17hydPZXV',
+    ipfsImage: 'ipfs://QmbjqQauZxxA2Q9F5e6bAoAZf85HZxyzUyvRs17hydPZXV/cover.jpeg',
+    collection: 'https://nftinfos.loopring.io/0x3f3624c5967059a1033888f2f8ff57bd4b18704f',
+    royalty: 10,
+  },
+  {
+    id: 'get-it-right',
+    title: 'Get It Right',
+    artist: 'Bootie Brown prod. Kurser',
+    album: 'UltraHipFunkWave',
+    description: 'BB goes back to the Boom Bap. Produced by Kurser out of Paris. 2 Grammy nominations for Gorillaz contributions.',
+    stems: [
+      { name: 'Vocals', path: '/audio/get-it-right/vocals.mp3' },
+      { name: 'Drum', path: '/audio/get-it-right/drum.mp3' },
+      { name: 'Bass', path: '/audio/get-it-right/bass.mp3' },
+      { name: 'Synths', path: '/audio/get-it-right/synths.mp3' },
+    ],
+    coverPath: '/audio/get-it-right/cover.png',
+    ipfsCid: 'QmSzbxunHatTJ8ht3T4A45rvi6tMSYKqJqctwFH2L2GgpE',
+    ipfsImage: 'ipfs://QmSzbxunHatTJ8ht3T4A45rvi6tMSYKqJqctwFH2L2GgpE/cover.png',
+    collection: 'https://nftinfos.loopring.io/0xd0351558182f1165aa956739c4502895e85ef4ba',
+    royalty: 10,
+  },
+  {
+    id: 'satisfied',
+    title: 'Satisfied',
+    artist: 'Bootie Brown & Kurser',
+    album: 'Chapter 1',
+    description: 'Questions the passage of time and superficial purchases. Released via Chapter 1. Featured in PROCESS Docuseries.',
+    stems: [
+      { name: 'Vocal', path: '/audio/satisfied/vocal.mp3' },
+      { name: 'Drums', path: '/audio/satisfied/drums.mp3' },
+      { name: 'Bass', path: '/audio/satisfied/bass.mp3' },
+      { name: 'Synths', path: '/audio/satisfied/synths.mp3' },
+      { name: 'Hooks & FX', path: '/audio/satisfied/hooks-n-fx.mp3' },
+    ],
+    coverPath: '/audio/satisfied/cover.png',
+    ipfsCid: 'QmcVS4UvMXeH453F2A1U7KY5D9D1TSQiw9PbCAhRN8wmgE',
+    ipfsImage: 'ipfs://QmcVS4UvMXeH453F2A1U7KY5D9D1TSQiw9PbCAhRN8wmgE/cover.png',
+    collection: 'https://nftinfos.loopring.io/0xe692526e868fab72f85f48dd58b720eb9245e121',
+    royalty: 10,
+  },
+];
+
+/* ── Component ── */
 export default function KintsugiPlayer() {
-  const audioRef = useRef<HTMLAudioElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number>(0);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
-  const marqueeRef = useRef<HTMLDivElement>(null);
+  const mergerRef = useRef<ChannelMergerNode | null>(null);
+  const stemAudioRef = useRef<StemAudio[]>([]);
 
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [currentTrack, setCurrentTrack] = useState<number>(-1);
+  const [currentSong, setCurrentSong] = useState<SongEntry | null>(null);
+  const [stems, setStems] = useState<Stem[]>([]);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(80);
-  const [shuffle, setShuffle] = useState(false);
-  const [repeat, setRepeat] = useState<'off' | 'all' | 'one'>('off');
+  const [masterVolume, setMasterVolume] = useState(80);
   const [dragging, setDragging] = useState(false);
   const [eqVisible, setEqVisible] = useState(true);
-  const [plVisible, setPlVisible] = useState(true);
+  const [libVisible, setLibVisible] = useState(true);
+  const [mixerVisible, setMixerVisible] = useState(true);
+  const [view, setView] = useState<'library' | 'info'>('library');
 
   const fmt = (s: number) => {
     const m = Math.floor(s / 60);
@@ -37,19 +120,116 @@ export default function KintsugiPlayer() {
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const initAudio = useCallback(() => {
-    if (!audioRef.current || ctxRef.current) return;
+  /* ── Audio context ── */
+  const getCtx = useCallback(() => {
+    if (ctxRef.current) return ctxRef.current;
     const ctx = new AudioContext();
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
-    const source = ctx.createMediaElementSource(audioRef.current);
-    source.connect(analyser);
     analyser.connect(ctx.destination);
     ctxRef.current = ctx;
     analyserRef.current = analyser;
-    sourceRef.current = source;
+    return ctx;
   }, []);
 
+  /* ── Cleanup stems ── */
+  const cleanupStems = useCallback(() => {
+    stemAudioRef.current.forEach(sa => {
+      sa.el.pause();
+      sa.el.src = '';
+      sa.source.disconnect();
+      sa.gain.disconnect();
+    });
+    stemAudioRef.current = [];
+  }, []);
+
+  /* ── Load song ── */
+  const loadSong = useCallback((song: SongEntry) => {
+    cleanupStems();
+    const ctx = getCtx();
+    const analyser = analyserRef.current!;
+
+    const newStems: Stem[] = song.stems.map(s => ({
+      name: s.name,
+      path: s.path,
+      volume: 100,
+      muted: false,
+      solo: false,
+    }));
+
+    const stemAudios: StemAudio[] = song.stems.map(s => {
+      const el = new Audio();
+      el.crossOrigin = 'anonymous';
+      el.preload = 'auto';
+      el.src = s.path;
+      const source = ctx.createMediaElementSource(el);
+      const gain = ctx.createGain();
+      gain.gain.value = 1;
+      source.connect(gain);
+      gain.connect(analyser);
+      return { el, source, gain };
+    });
+
+    stemAudioRef.current = stemAudios;
+    setStems(newStems);
+    setCurrentSong(song);
+    setPlaying(false);
+    setCurTime(0);
+
+    // Get duration from first stem
+    const firstEl = stemAudios[0]?.el;
+    if (firstEl) {
+      const onMeta = () => {
+        setDuration(firstEl.duration);
+        firstEl.removeEventListener('loadedmetadata', onMeta);
+      };
+      firstEl.addEventListener('loadedmetadata', onMeta);
+    }
+  }, [cleanupStems, getCtx]);
+
+  /* ── Play/Pause all stems ── */
+  const togglePlay = useCallback(() => {
+    if (!currentSong) {
+      if (LIBRARY.length > 0) loadSong(LIBRARY[0]);
+      return;
+    }
+    const ctx = ctxRef.current;
+    if (ctx?.state === 'suspended') ctx.resume();
+
+    if (playing) {
+      stemAudioRef.current.forEach(sa => sa.el.pause());
+      setPlaying(false);
+    } else {
+      // Sync all stems to same time and play
+      const t = stemAudioRef.current[0]?.el.currentTime ?? 0;
+      stemAudioRef.current.forEach(sa => {
+        sa.el.currentTime = t;
+        sa.el.play();
+      });
+      setPlaying(true);
+    }
+  }, [currentSong, playing, loadSong]);
+
+  /* ── Time update ── */
+  useEffect(() => {
+    if (!playing) return;
+    const firstEl = stemAudioRef.current[0]?.el;
+    if (!firstEl) return;
+    const tick = () => { if (!dragging) setCurTime(firstEl.currentTime); };
+    const onEnd = () => {
+      setPlaying(false);
+      setCurTime(0);
+      stemAudioRef.current.forEach(sa => { sa.el.currentTime = 0; });
+    };
+    firstEl.addEventListener('timeupdate', tick);
+    firstEl.addEventListener('ended', onEnd);
+    return () => {
+      firstEl.removeEventListener('timeupdate', tick);
+      firstEl.removeEventListener('ended', onEnd);
+    };
+  }, [playing, dragging]);
+
+  /* ── Visualizer ── */
   const drawViz = useCallback(() => {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
@@ -64,7 +244,6 @@ export default function KintsugiPlayer() {
       analyser.getByteFrequencyData(data);
       ctx.fillStyle = '#0a0a14';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       const barW = (canvas.width / 20) - 1;
       for (let i = 0; i < 20; i++) {
         const idx = Math.floor(i * bufLen / 20);
@@ -86,88 +265,84 @@ export default function KintsugiPlayer() {
     return () => cancelAnimationFrame(animFrameRef.current);
   }, [playing, drawViz]);
 
+  /* ── Stem volume/mute/solo ── */
+  const updateStemGain = useCallback((newStems: Stem[]) => {
+    const hasSolo = newStems.some(s => s.solo);
+    newStems.forEach((s, i) => {
+      const sa = stemAudioRef.current[i];
+      if (!sa) return;
+      const shouldPlay = hasSolo ? s.solo : !s.muted;
+      sa.gain.gain.value = shouldPlay ? (s.volume / 100) * (masterVolume / 100) : 0;
+    });
+  }, [masterVolume]);
+
+  const setStemVolume = (idx: number, vol: number) => {
+    setStems(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], volume: vol };
+      updateStemGain(next);
+      return next;
+    });
+  };
+
+  const toggleStemMute = (idx: number) => {
+    setStems(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], muted: !next[idx].muted };
+      updateStemGain(next);
+      return next;
+    });
+  };
+
+  const toggleStemSolo = (idx: number) => {
+    setStems(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], solo: !next[idx].solo };
+      updateStemGain(next);
+      return next;
+    });
+  };
+
+  // Keep master volume in sync
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const tick = () => { if (!dragging) setCurTime(audio.currentTime); };
-    const onEnd = () => {
-      if (repeat === 'one') { audio.currentTime = 0; audio.play(); return; }
-      if (currentTrack < tracks.length - 1) playTrack(currentTrack + 1);
-      else if (repeat === 'all') playTrack(0);
-      else setPlaying(false);
-    };
-    audio.addEventListener('timeupdate', tick);
-    audio.addEventListener('ended', onEnd);
-    return () => { audio.removeEventListener('timeupdate', tick); audio.removeEventListener('ended', onEnd); };
-  });
+    updateStemGain(stems);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masterVolume]);
 
-  const playTrack = (idx: number) => {
-    if (idx < 0 || idx >= tracks.length) return;
-    initAudio();
-    const audio = audioRef.current!;
-    audio.src = tracks[idx].url;
-    audio.volume = volume / 100;
-    audio.play();
-    setCurrentTrack(idx);
-    setPlaying(true);
-    setDuration(tracks[idx].duration);
-  };
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (currentTrack === -1 && tracks.length > 0) { playTrack(0); return; }
-    if (playing) { audioRef.current.pause(); setPlaying(false); }
-    else { initAudio(); audioRef.current.play(); setPlaying(true); }
-  };
-
-  const addFiles = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.accept = 'audio/*,video/*';
-    input.onchange = async (e) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (!files) return;
-      const newTracks: Track[] = [];
-      for (const file of Array.from(files)) {
-        const url = URL.createObjectURL(file);
-        const dur = await new Promise<number>((res) => {
-          const el = document.createElement('audio');
-          el.src = url;
-          el.onloadedmetadata = () => res(el.duration);
-          el.onerror = () => res(0);
-        });
-        newTracks.push({ id: `t_${Date.now()}_${Math.random().toString(36).slice(2)}`, name: file.name.replace(/\.[^.]+$/, ''), url, duration: dur });
-      }
-      setTracks(prev => [...prev, ...newTracks]);
-    };
-    input.click();
-  };
-
+  /* ── Seek ── */
   const seekTo = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    if (audioRef.current && duration) {
-      audioRef.current.currentTime = pct * duration;
-      setCurTime(pct * duration);
+    if (duration) {
+      const t = pct * duration;
+      stemAudioRef.current.forEach(sa => { sa.el.currentTime = t; });
+      setCurTime(t);
     }
   };
 
   const setVol = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const v = Math.round(pct * 100);
-    setVolume(v);
-    if (audioRef.current) audioRef.current.volume = v / 100;
+    setMasterVolume(Math.round(pct * 100));
   };
 
-  const removeTrack = (idx: number) => {
-    setTracks(prev => prev.filter((_, i) => i !== idx));
-    if (idx === currentTrack) { setPlaying(false); setCurrentTrack(-1); }
-    else if (idx < currentTrack) setCurrentTrack(prev => prev - 1);
+  /* ── Play next/prev song ── */
+  const playSongByOffset = (offset: number) => {
+    const idx = LIBRARY.findIndex(s => s.id === currentSong?.id);
+    const next = idx + offset;
+    if (next >= 0 && next < LIBRARY.length) {
+      loadSong(LIBRARY[next]);
+      // Auto-play after a tick to let audio elements initialize
+      setTimeout(() => {
+        const ctx = ctxRef.current;
+        if (ctx?.state === 'suspended') ctx.resume();
+        stemAudioRef.current.forEach(sa => sa.el.play());
+        setPlaying(true);
+      }, 100);
+    }
   };
 
-  // Winamp-style beveled border
+  /* ── Styles ── */
   const bevel = (inset = false) => ({
     borderTop: `1px solid ${inset ? 'var(--win-border-dark)' : 'var(--win-border-light)'}`,
     borderLeft: `1px solid ${inset ? 'var(--win-border-dark)' : 'var(--win-border-light)'}`,
@@ -188,11 +363,26 @@ export default function KintsugiPlayer() {
 
   const btnSmall: React.CSSProperties = { ...btnStyle, padding: '3px 6px', fontSize: '8px' };
 
-  const trackName = currentTrack >= 0 ? tracks[currentTrack]?.name ?? '' : 'KINTSUGI PLAYER';
+  const titleBar: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '3px 4px',
+    background: 'linear-gradient(90deg, var(--win-title), var(--accent-dim), var(--win-title))',
+    borderBottom: '1px solid var(--win-border-dark)',
+  };
+
+  const titleText: React.CSSProperties = {
+    fontSize: '7px', color: 'var(--accent)', letterSpacing: '2px',
+  };
+
+  const windowBox: React.CSSProperties = {
+    width: 340, marginTop: 2, background: 'var(--win-bg)', ...bevel(),
+    boxShadow: '0 0 10px var(--kintsugi-glow)',
+  };
+
+  const trackName = currentSong?.title ?? 'KINTSUGI PLAYER';
 
   return (
     <div style={{ fontFamily: "'Press Start 2P', monospace", userSelect: 'none' }}>
-      <audio ref={audioRef} crossOrigin="anonymous" />
 
       {/* === MAIN WINDOW === */}
       <div style={{
@@ -200,15 +390,12 @@ export default function KintsugiPlayer() {
         boxShadow: '0 0 20px var(--kintsugi-glow), inset 0 0 30px rgba(0,0,0,0.3)',
       }}>
         {/* Title bar */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '3px 4px', background: 'linear-gradient(90deg, var(--win-title), var(--accent-dim), var(--win-title))',
-          borderBottom: '1px solid var(--win-border-dark)',
-        }}>
-          <span style={{ fontSize: '7px', color: 'var(--accent)', letterSpacing: '2px' }}>KINTSUGI PLAYER</span>
+        <div style={titleBar}>
+          <span style={titleText}>KINTSUGI PLAYER</span>
           <div style={{ display: 'flex', gap: 2 }}>
             <button onClick={() => setEqVisible(!eqVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: eqVisible ? 'var(--lcd-text)' : 'var(--text)' }}>EQ</button>
-            <button onClick={() => setPlVisible(!plVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: plVisible ? 'var(--lcd-text)' : 'var(--text)' }}>PL</button>
+            <button onClick={() => setMixerVisible(!mixerVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: mixerVisible ? 'var(--lcd-text)' : 'var(--text)' }}>MIX</button>
+            <button onClick={() => setLibVisible(!libVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: libVisible ? 'var(--lcd-text)' : 'var(--text)' }}>LIB</button>
           </div>
         </div>
 
@@ -217,26 +404,22 @@ export default function KintsugiPlayer() {
           margin: '4px', padding: '6px', background: 'var(--lcd-bg)',
           ...bevel(true), position: 'relative', overflow: 'hidden', height: 52,
         }}>
-          {/* Bitrate / kHz / stereo badges */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: '7px', color: 'var(--lcd-text-dim)' }}>192kbps</span>
+            <span style={{ fontSize: '7px', color: 'var(--lcd-text-dim)' }}>{stems.length} stems</span>
             <span style={{ fontSize: '7px', color: 'var(--lcd-text-dim)' }}>44kHz</span>
             <span style={{ fontSize: '7px', color: playing ? 'var(--lcd-text)' : 'var(--lcd-text-dim)' }}>stereo</span>
           </div>
-          {/* Scrolling track name */}
           <div style={{ overflow: 'hidden', width: '100%' }}>
-            <div ref={marqueeRef} style={{
+            <div style={{
               color: 'var(--lcd-text)', fontSize: '9px', whiteSpace: 'nowrap',
               animation: trackName.length > 30 ? 'marquee 8s linear infinite' : 'none',
             }}>
-              {trackName}
+              {currentSong ? `${currentSong.artist} - ${trackName}` : trackName}
             </div>
           </div>
-          {/* Time */}
           <div style={{ position: 'absolute', right: 8, bottom: 6, fontSize: '14px', color: 'var(--lcd-text)', fontFamily: "'Press Start 2P', monospace", textShadow: '0 0 6px var(--lcd-text)' }}>
             {fmt(currentTime)}
           </div>
-          {/* Kintsugi gold crack accent */}
           <div style={{
             position: 'absolute', top: 0, right: 40, width: 1, height: '100%',
             background: 'linear-gradient(180deg, transparent 10%, var(--kintsugi-gold) 30%, transparent 50%, var(--kintsugi-gold) 70%, transparent 90%)',
@@ -264,90 +447,189 @@ export default function KintsugiPlayer() {
 
         {/* Transport controls */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 2, padding: '4px' }}>
-          <button onClick={() => currentTrack > 0 && playTrack(currentTrack - 1)} style={btnStyle} title="Previous">{'\u23EE'}</button>
+          <button onClick={() => playSongByOffset(-1)} style={btnStyle} title="Previous Song">{'\u23EE'}</button>
           <button onClick={togglePlay} style={{ ...btnStyle, color: playing ? 'var(--lcd-text)' : 'var(--accent)', minWidth: 36 }}>
             {playing ? '\u25AE\u25AE' : '\u25B6'}
           </button>
-          <button onClick={() => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; setPlaying(false); setCurTime(0); } }} style={btnStyle} title="Stop">{'\u25A0'}</button>
-          <button onClick={() => currentTrack < tracks.length - 1 && playTrack(currentTrack + 1)} style={btnStyle} title="Next">{'\u23ED'}</button>
-          <div style={{ width: 8 }} />
-          <button onClick={addFiles} style={{ ...btnStyle, fontSize: '8px' }} title="Add files">+FILE</button>
+          <button onClick={() => {
+            stemAudioRef.current.forEach(sa => { sa.el.pause(); sa.el.currentTime = 0; });
+            setPlaying(false); setCurTime(0);
+          }} style={btnStyle} title="Stop">{'\u25A0'}</button>
+          <button onClick={() => playSongByOffset(1)} style={btnStyle} title="Next Song">{'\u23ED'}</button>
         </div>
 
-        {/* Volume & toggles row */}
+        {/* Volume row */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '2px 4px 4px', gap: 6 }}>
           <span style={{ fontSize: '6px', color: 'var(--text)', width: 20 }}>VOL</span>
           <div onClick={setVol} style={{ flex: 1, height: 6, background: 'var(--lcd-bg)', ...bevel(true), cursor: 'pointer', position: 'relative' }}>
-            <div style={{ height: '100%', width: `${volume}%`, background: 'linear-gradient(90deg, var(--lcd-text-dim), var(--lcd-text))' }} />
+            <div style={{ height: '100%', width: `${masterVolume}%`, background: 'linear-gradient(90deg, var(--lcd-text-dim), var(--lcd-text))' }} />
           </div>
-          <span style={{ fontSize: '7px', color: 'var(--lcd-text)', width: 28, textAlign: 'right' }}>{volume}%</span>
-          <button onClick={() => setShuffle(!shuffle)} style={{ ...btnSmall, color: shuffle ? 'var(--lcd-text)' : 'var(--text)' }}>SHF</button>
-          <button onClick={() => setRepeat(r => r === 'off' ? 'all' : r === 'all' ? 'one' : 'off')} style={{ ...btnSmall, color: repeat !== 'off' ? 'var(--lcd-text)' : 'var(--text)' }}>
-            {repeat === 'one' ? 'RP1' : 'RPT'}
-          </button>
+          <span style={{ fontSize: '7px', color: 'var(--lcd-text)', width: 28, textAlign: 'right' }}>{masterVolume}%</span>
         </div>
       </div>
 
       {/* === EQ WINDOW === */}
       {eqVisible && (
-        <div style={{
-          width: 340, marginTop: 2, background: 'var(--win-bg)', ...bevel(),
-          boxShadow: '0 0 10px var(--kintsugi-glow)',
-        }}>
-          <div style={{
-            padding: '3px 4px', background: 'linear-gradient(90deg, var(--win-title), var(--accent-dim), var(--win-title))',
-            borderBottom: '1px solid var(--win-border-dark)',
-            fontSize: '7px', color: 'var(--accent)', letterSpacing: '2px',
-          }}>EQUALIZER</div>
+        <div style={windowBox}>
+          <div style={{ ...titleBar, justifyContent: 'flex-start' }}>
+            <span style={titleText}>EQUALIZER</span>
+          </div>
           <div style={{ padding: 4 }}>
             <canvas ref={canvasRef} width={328} height={60} style={{ width: '100%', height: 60, ...bevel(true), display: 'block' }} />
           </div>
         </div>
       )}
 
-      {/* === PLAYLIST WINDOW === */}
-      {plVisible && (
-        <div style={{
-          width: 340, marginTop: 2, background: 'var(--win-bg)', ...bevel(),
-          boxShadow: '0 0 10px var(--kintsugi-glow)',
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '3px 4px', background: 'linear-gradient(90deg, var(--win-title), var(--accent-dim), var(--win-title))',
-            borderBottom: '1px solid var(--win-border-dark)',
-          }}>
-            <span style={{ fontSize: '7px', color: 'var(--accent)', letterSpacing: '2px' }}>PLAYLIST</span>
-            <span style={{ fontSize: '6px', color: 'var(--text)' }}>{tracks.length} tracks</span>
+      {/* === STEM MIXER WINDOW === */}
+      {mixerVisible && stems.length > 0 && (
+        <div style={windowBox}>
+          <div style={titleBar}>
+            <span style={titleText}>STEM MIXER</span>
+            <span style={{ fontSize: '6px', color: 'var(--text)' }}>{stems.length} stems</span>
           </div>
-          <div style={{ maxHeight: 160, overflowY: 'auto', ...bevel(true), margin: 4 }}>
-            {tracks.length === 0 ? (
-              <div style={{ padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: '8px', color: 'var(--lcd-text-dim)', marginBottom: 8 }}>drag files here or click +FILE</div>
-                <div style={{ fontSize: '6px', color: 'var(--accent-dim)' }}>supports mp3, wav, ogg, flac, mp4</div>
-              </div>
-            ) : (
-              tracks.map((t, i) => (
-                <div key={t.id} onClick={() => playTrack(i)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '3px 6px',
-                  background: i === currentTrack ? 'var(--win-title)' : 'transparent',
-                  cursor: 'pointer', borderBottom: '1px solid var(--groove-dark)',
+          <div style={{ padding: '4px' }}>
+            {stems.map((stem, i) => {
+              const hasSolo = stems.some(s => s.solo);
+              const active = hasSolo ? stem.solo : !stem.muted;
+              return (
+                <div key={stem.name} style={{
+                  display: 'flex', alignItems: 'center', gap: 4, padding: '3px 2px',
+                  borderBottom: i < stems.length - 1 ? '1px solid var(--groove-dark)' : 'none',
+                  opacity: active ? 1 : 0.4,
                 }}>
-                  <span style={{ fontSize: '7px', color: i === currentTrack ? 'var(--lcd-text)' : 'var(--lcd-text-dim)', width: 16, textAlign: 'right' }}>
-                    {i === currentTrack && playing ? '\u25B6' : `${i + 1}.`}
+                  {/* Stem name */}
+                  <span style={{
+                    fontSize: '7px', color: active ? 'var(--text-bright)' : 'var(--text)',
+                    width: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>{stem.name}</span>
+
+                  {/* Volume slider */}
+                  <div
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                      setStemVolume(i, Math.round(pct * 100));
+                    }}
+                    style={{
+                      flex: 1, height: 6, background: 'var(--lcd-bg)', ...bevel(true),
+                      cursor: 'pointer', position: 'relative',
+                    }}
+                  >
+                    <div style={{
+                      height: '100%', width: `${stem.volume}%`,
+                      background: active
+                        ? 'linear-gradient(90deg, var(--accent-dim), var(--accent))'
+                        : 'var(--win-border-dark)',
+                    }} />
+                  </div>
+
+                  {/* Volume % */}
+                  <span style={{ fontSize: '6px', color: 'var(--lcd-text-dim)', width: 22, textAlign: 'right' }}>
+                    {stem.volume}%
                   </span>
-                  <span style={{ fontSize: '7px', color: i === currentTrack ? 'var(--text-bright)' : 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {t.name}
-                  </span>
-                  <span style={{ fontSize: '7px', color: 'var(--lcd-text-dim)' }}>{fmt(t.duration)}</span>
-                  <button onClick={(e) => { e.stopPropagation(); removeTrack(i); }} style={{ background: 'none', border: 'none', color: 'var(--accent-dim)', fontSize: '8px', cursor: 'pointer', padding: '0 2px' }}>x</button>
+
+                  {/* Mute */}
+                  <button
+                    onClick={() => toggleStemMute(i)}
+                    style={{
+                      ...btnSmall, fontSize: '6px', padding: '2px 4px',
+                      color: stem.muted ? '#ff4444' : 'var(--text)',
+                      background: stem.muted ? 'var(--lcd-bg)' : 'var(--button-face)',
+                    }}
+                  >M</button>
+
+                  {/* Solo */}
+                  <button
+                    onClick={() => toggleStemSolo(i)}
+                    style={{
+                      ...btnSmall, fontSize: '6px', padding: '2px 4px',
+                      color: stem.solo ? 'var(--lcd-text)' : 'var(--text)',
+                      background: stem.solo ? 'var(--lcd-bg)' : 'var(--button-face)',
+                    }}
+                  >S</button>
                 </div>
-              ))
-            )}
+              );
+            })}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 4px 4px', alignItems: 'center' }}>
-            <button onClick={addFiles} style={btnSmall}>+ ADD</button>
-            <button onClick={() => setTracks([])} style={{ ...btnSmall, color: 'var(--accent-dim)' }}>CLEAR</button>
+        </div>
+      )}
+
+      {/* === LIBRARY WINDOW === */}
+      {libVisible && (
+        <div style={windowBox}>
+          <div style={titleBar}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setView('library')}
+                style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: view === 'library' ? 'var(--lcd-text)' : 'var(--text)', background: 'none', border: 'none' }}
+              >LIBRARY</button>
+              {currentSong && (
+                <button
+                  onClick={() => setView('info')}
+                  style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: view === 'info' ? 'var(--lcd-text)' : 'var(--text)', background: 'none', border: 'none' }}
+                >INFO</button>
+              )}
+            </div>
+            <span style={{ fontSize: '6px', color: 'var(--text)' }}>{LIBRARY.length} songs</span>
           </div>
+
+          {view === 'library' ? (
+            <div style={{ ...bevel(true), margin: 4 }}>
+              {LIBRARY.map((song) => {
+                const isActive = currentSong?.id === song.id;
+                return (
+                  <div
+                    key={song.id}
+                    onClick={() => {
+                      loadSong(song);
+                      setTimeout(() => {
+                        const ctx = ctxRef.current;
+                        if (ctx?.state === 'suspended') ctx.resume();
+                        stemAudioRef.current.forEach(sa => sa.el.play());
+                        setPlaying(true);
+                      }, 100);
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px',
+                      background: isActive ? 'var(--win-title)' : 'transparent',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--groove-dark)',
+                    }}
+                  >
+                    <span style={{
+                      fontSize: '7px',
+                      color: isActive && playing ? 'var(--lcd-text)' : 'var(--lcd-text-dim)',
+                      width: 12,
+                    }}>
+                      {isActive && playing ? '\u25B6' : '\u266A'}
+                    </span>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{
+                        fontSize: '8px',
+                        color: isActive ? 'var(--text-bright)' : 'var(--text)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>{song.title}</div>
+                      <div style={{
+                        fontSize: '6px',
+                        color: 'var(--lcd-text-dim)',
+                        marginTop: 2,
+                      }}>{song.artist}</div>
+                    </div>
+                    <span style={{ fontSize: '6px', color: 'var(--accent-dim)' }}>{song.stems.length} stems</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : currentSong && (
+            <div style={{ padding: 8 }}>
+              <div style={{ fontSize: '9px', color: 'var(--text-bright)', marginBottom: 4 }}>{currentSong.title}</div>
+              <div style={{ fontSize: '7px', color: 'var(--accent)', marginBottom: 6 }}>{currentSong.artist}</div>
+              <div style={{ fontSize: '6px', color: 'var(--text)', lineHeight: '1.6', marginBottom: 8 }}>{currentSong.description}</div>
+              <div style={{ fontSize: '6px', color: 'var(--lcd-text-dim)', marginBottom: 2 }}>IPFS: {currentSong.ipfsCid.slice(0, 12)}...{currentSong.ipfsCid.slice(-6)}</div>
+              <div style={{ fontSize: '6px', color: 'var(--lcd-text-dim)', marginBottom: 2 }}>Royalty: {currentSong.royalty}%</div>
+              <div style={{ fontSize: '6px', color: 'var(--lcd-text-dim)' }}>Album: {currentSong.album}</div>
+            </div>
+          )}
         </div>
       )}
 
