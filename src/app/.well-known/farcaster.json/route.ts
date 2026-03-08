@@ -14,7 +14,9 @@ export async function GET() {
       iconUrl: `${URL}/icon.png`,
       imageUrl: `${URL}/og-image.png`,
       buttonTitle: 'Launch Kintsugi Player',
+      splashImageUrl: `${URL}/splash-v2.png`,
       splashBackgroundColor: '#1a1a2e',
+      primaryCategory: 'entertainment',
       webhookUrl: `${URL}/api/webhook`,
     },
   });
