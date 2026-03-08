@@ -1,0 +1,25 @@
+/* Kintsugi Player — Y2K Winamp-era styles */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --win-bg: #1e1e3a;
+  --win-border-light: #5a5a8a;
+  --win-border-dark: #0a0a1e;
+  --win-title: #2a2a5a;
+  --accent: #d4af37;
+  --accent-dim: #8a7a2a;
+  --text: #c0c0d0;
+  --text-bright: #e8e8f0;
+  --lcd-bg: #0a0a14;
+  --lcd-text: #00ff88;
+  --lcd-text-dim: #005533;
+  --groove-light: #3a3a6a;
+  --groove-dark: #12122a;
+  --button-face: #2a2a4e;
+  --button-highlight: #4a4a7a;
+  --button-shadow: #16162e;
+  --kintsugi-gold: #d4af37;
+  --kintsugi-glow: rgba(212, 175, 55, 0.3);
+}
