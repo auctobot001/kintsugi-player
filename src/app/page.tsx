@@ -640,9 +640,16 @@ export default function KintsugiPlayer() {
         opacity: 0.5,
       }} />
 
-      {/* film3 branding */}
+      {/* branding */}
       <div style={{ width: 340, textAlign: 'center', padding: '6px 0' }}>
-        <span style={{ fontSize: '6px', color: 'var(--accent-dim)', letterSpacing: '3px' }}>FILM3 / KINTSUGI</span>
+        <span style={{ fontSize: '6px', color: 'var(--accent-dim)', letterSpacing: '3px' }}>KINTSUGI DECENTRALIZED MEDIA</span>
+      </div>
+
+      {/* footer */}
+      <div style={{ width: 340, textAlign: 'center', padding: '2px 0 6px' }}>
+        <span style={{ fontSize: '5px', color: 'var(--accent-dim)', opacity: 0.6, letterSpacing: '1.5px' }}>
+          FILM3 PRODUCTION PIPELINE | <a href="https://patternintegrity.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-dim)', textDecoration: 'none' }}>PATTERN INTEGRITY</a>
+        </span>
       </div>
 
       <style>{`
