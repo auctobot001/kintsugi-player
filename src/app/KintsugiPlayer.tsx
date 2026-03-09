@@ -36,6 +36,8 @@ export default function KintsugiPlayer() {
   const ctxRef = useRef<AudioContext | null>(null);
   const mergerRef = useRef<ChannelMergerNode | null>(null);
   const stemAudioRef = useRef<StemAudio[]>([]);
+  const videoSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const videoGainRef = useRef<GainNode | null>(null);
 
   const [currentSong, setCurrentSong] = useState<SongEntry | null>(null);
   const [stems, setStems] = useState<Stem[]>([]);
@@ -188,6 +190,19 @@ export default function KintsugiPlayer() {
           hlsRef.current = hls;
         } else {
           video.src = song.videoUrl;
+        }
+
+        // Connect video audio to Web Audio API for equalizer visualization
+        const ctx = getCtx();
+        const analyser = analyserRef.current!;
+        if (!videoSourceRef.current) {
+          const source = ctx.createMediaElementSource(video);
+          const gain = ctx.createGain();
+          gain.gain.value = 1;
+          source.connect(gain);
+          gain.connect(analyser);
+          videoSourceRef.current = source;
+          videoGainRef.current = gain;
         }
 
         const onMeta = () => {
@@ -573,7 +588,7 @@ export default function KintsugiPlayer() {
           <div style={{ ...titleBar, justifyContent: 'flex-start' }}>
             <span style={titleText}>{currentSong.mediaType === 'video' ? 'VIDEO PLAYBACK' : 'VIDEO'}</span>
           </div>
-          <div style={{ padding: 4 }}>
+          <div style={{ padding: 4, position: 'relative' }}>
             <video
               ref={videoRef}
               muted={currentSong.mediaType !== 'video'}
@@ -585,6 +600,30 @@ export default function KintsugiPlayer() {
                 background: '#000',
               }}
             />
+            {playing && (
+              <button
+                onClick={() => {
+                  const video = videoRef.current;
+                  if (!video) return;
+                  if (video.requestFullscreen) video.requestFullscreen();
+                  else if ((video as any).webkitRequestFullscreen) (video as any).webkitRequestFullscreen();
+                  else if ((video as any).webkitEnterFullScreen) (video as any).webkitEnterFullScreen();
+                }}
+                style={{
+                  position: 'absolute',
+                  bottom: 10,
+                  right: 10,
+                  ...btnSmall,
+                  fontSize: '8px',
+                  padding: '4px 6px',
+                  opacity: 0.7,
+                  background: 'rgba(0,0,0,0.6)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--accent-dim)',
+                }}
+                title="Fullscreen"
+              >⛶</button>
+            )}
           </div>
         </div>
       )}
