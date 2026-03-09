@@ -38,6 +38,7 @@ export default function KintsugiPlayer() {
   const stemAudioRef = useRef<StemAudio[]>([]);
   const videoSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const videoGainRef = useRef<GainNode | null>(null);
+  const stemSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [currentSong, setCurrentSong] = useState<SongEntry | null>(null);
   const [stems, setStems] = useState<Stem[]>([]);
@@ -79,6 +80,10 @@ export default function KintsugiPlayer() {
 
   /* ── Cleanup stems ── */
   const cleanupStems = useCallback(() => {
+    if (stemSyncRef.current) {
+      clearInterval(stemSyncRef.current);
+      stemSyncRef.current = null;
+    }
     stemAudioRef.current.forEach(sa => {
       sa.el.pause();
       sa.el.src = '';
@@ -174,45 +179,62 @@ export default function KintsugiPlayer() {
       }
     } else {
       // Video-only track — video IS the audio source
+      // NOTE: video element setup is deferred to useEffect (it may not be in DOM yet)
       setStems([]);
       stemAudioRef.current = [];
-
-      if (song.videoUrl) {
-        const video = videoRef.current;
-        if (!video) return;
-        video.muted = false; // Video audio is the primary source
-        video.playsInline = true;
-
-        if (song.videoUrl.includes('.m3u8') && Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(song.videoUrl);
-          hls.attachMedia(video);
-          hlsRef.current = hls;
-        } else {
-          video.src = song.videoUrl;
-        }
-
-        // Connect video audio to Web Audio API for equalizer visualization
-        const ctx = getCtx();
-        const analyser = analyserRef.current!;
-        if (!videoSourceRef.current) {
-          const source = ctx.createMediaElementSource(video);
-          const gain = ctx.createGain();
-          gain.gain.value = 1;
-          source.connect(gain);
-          gain.connect(analyser);
-          videoSourceRef.current = source;
-          videoGainRef.current = gain;
-        }
-
-        const onMeta = () => {
-          setDuration(video.duration);
-          video.removeEventListener('loadedmetadata', onMeta);
-        };
-        video.addEventListener('loadedmetadata', onMeta);
-      }
     }
   }, [cleanupStems, cleanupVideo, setupVideo, getCtx]);
+
+  /* ── Deferred video-only setup (video element must be in DOM first) ── */
+  useEffect(() => {
+    if (!currentSong || currentSong.mediaType !== 'video' || !currentSong.videoUrl) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Set up video source
+    video.crossOrigin = 'anonymous';
+    video.muted = false;
+    video.playsInline = true;
+
+    if (currentSong.videoUrl.includes('.m3u8') && Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(currentSong.videoUrl);
+      hls.attachMedia(video);
+      hlsRef.current = hls;
+    } else {
+      video.src = currentSong.videoUrl;
+    }
+
+    // Connect to Web Audio for EQ visualization
+    try {
+      const ctx = getCtx();
+      const analyser = analyserRef.current!;
+      if (!videoSourceRef.current) {
+        const source = ctx.createMediaElementSource(video);
+        const gain = ctx.createGain();
+        gain.gain.value = masterVolume / 100;
+        source.connect(gain);
+        gain.connect(analyser);
+        videoSourceRef.current = source;
+        videoGainRef.current = gain;
+      } else if (videoGainRef.current) {
+        videoGainRef.current.gain.value = masterVolume / 100;
+      }
+    } catch {
+      // CORS or Web Audio error — video audio will still play from element directly
+    }
+
+    const onMeta = () => {
+      setDuration(video.duration);
+      video.removeEventListener('loadedmetadata', onMeta);
+    };
+    video.addEventListener('loadedmetadata', onMeta);
+
+    return () => {
+      video.removeEventListener('loadedmetadata', onMeta);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSong?.id]);
 
   /* ── Play/Pause ── */
   const togglePlay = useCallback(() => {
@@ -227,6 +249,7 @@ export default function KintsugiPlayer() {
     const isVideoOnly = currentSong.mediaType === 'video';
 
     if (playing) {
+      if (stemSyncRef.current) { clearInterval(stemSyncRef.current); stemSyncRef.current = null; }
       stemAudioRef.current.forEach(sa => sa.el.pause());
       if (video && currentSong.videoUrl) video.pause();
       setPlaying(false);
@@ -237,16 +260,50 @@ export default function KintsugiPlayer() {
       }
       setPlaying(true);
     } else {
-      // Stem track: sync all stems and optional companion video
+      // Stem track: sync all stems before starting, then play together
       const t = stemAudioRef.current[0]?.el.currentTime ?? 0;
-      stemAudioRef.current.forEach(sa => {
-        sa.el.currentTime = t;
-        sa.el.play();
+
+      // Set all to same position first
+      stemAudioRef.current.forEach(sa => { sa.el.currentTime = t; });
+      if (video && currentSong.videoUrl) { video.currentTime = t; }
+
+      // Wait for all stems to be ready, then play in tight sync
+      const allReady = stemAudioRef.current.map(sa =>
+        new Promise<void>(resolve => {
+          if (sa.el.readyState >= 3) { resolve(); return; }
+          const handler = () => { sa.el.removeEventListener('canplay', handler); resolve(); };
+          sa.el.addEventListener('canplay', handler);
+          // Timeout fallback — don't wait forever
+          setTimeout(resolve, 500);
+        })
+      );
+
+      Promise.all(allReady).then(() => {
+        // Re-sync positions right before play
+        const syncTime = stemAudioRef.current[0]?.el.currentTime ?? t;
+        stemAudioRef.current.forEach(sa => {
+          sa.el.currentTime = syncTime;
+          sa.el.play();
+        });
+        if (video && currentSong?.videoUrl) {
+          video.currentTime = syncTime;
+          video.play();
+        }
+
+        // Periodic drift correction — re-align stems every 2 seconds
+        if (stemSyncRef.current) clearInterval(stemSyncRef.current);
+        stemSyncRef.current = setInterval(() => {
+          const master = stemAudioRef.current[0]?.el;
+          if (!master || master.paused) return;
+          const masterTime = master.currentTime;
+          stemAudioRef.current.slice(1).forEach(sa => {
+            if (Math.abs(sa.el.currentTime - masterTime) > 0.05) {
+              sa.el.currentTime = masterTime;
+            }
+          });
+        }, 2000);
       });
-      if (video && currentSong.videoUrl) {
-        video.currentTime = t;
-        video.play();
-      }
+
       setPlaying(true);
     }
   }, [currentSong, playing, loadSong]);
@@ -259,6 +316,7 @@ export default function KintsugiPlayer() {
     if (!timeSource) return;
     const tick = () => { if (!dragging) setCurTime(timeSource.currentTime); };
     const onEnd = () => {
+      if (stemSyncRef.current) { clearInterval(stemSyncRef.current); stemSyncRef.current = null; }
       setPlaying(false);
       setCurTime(0);
       stemAudioRef.current.forEach(sa => { sa.el.currentTime = 0; });
@@ -375,6 +433,10 @@ export default function KintsugiPlayer() {
   // Keep master volume in sync
   useEffect(() => {
     updateStemGain(stems);
+    // Also update video gain for video-only tracks
+    if (videoGainRef.current) {
+      videoGainRef.current.gain.value = masterVolume / 100;
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterVolume]);
 
@@ -411,18 +473,43 @@ export default function KintsugiPlayer() {
         const ctx = ctxRef.current;
         if (ctx?.state === 'suspended') ctx.resume();
         if (nextSong.mediaType === 'video') {
-          if (videoRef.current) {
-            videoRef.current.currentTime = 0;
-            videoRef.current.play();
-          }
+          // Video setup is deferred via useEffect — just wait for element
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.currentTime = 0;
+              videoRef.current.play();
+            }
+            setPlaying(true);
+          }, 200);
         } else {
-          stemAudioRef.current.forEach(sa => sa.el.play());
-          if (videoRef.current && nextSong.videoUrl) {
-            videoRef.current.currentTime = 0;
-            videoRef.current.play();
-          }
+          // Wait for stems to be ready then sync-play
+          const allReady = stemAudioRef.current.map(sa =>
+            new Promise<void>(resolve => {
+              if (sa.el.readyState >= 3) { resolve(); return; }
+              const handler = () => { sa.el.removeEventListener('canplay', handler); resolve(); };
+              sa.el.addEventListener('canplay', handler);
+              setTimeout(resolve, 500);
+            })
+          );
+          Promise.all(allReady).then(() => {
+            stemAudioRef.current.forEach(sa => { sa.el.currentTime = 0; sa.el.play(); });
+            if (videoRef.current && nextSong.videoUrl) {
+              videoRef.current.currentTime = 0;
+              videoRef.current.play();
+            }
+            // Start drift correction
+            if (stemSyncRef.current) clearInterval(stemSyncRef.current);
+            stemSyncRef.current = setInterval(() => {
+              const master = stemAudioRef.current[0]?.el;
+              if (!master || master.paused) return;
+              const mt = master.currentTime;
+              stemAudioRef.current.slice(1).forEach(sa => {
+                if (Math.abs(sa.el.currentTime - mt) > 0.05) sa.el.currentTime = mt;
+              });
+            }, 2000);
+          });
+          setPlaying(true);
         }
-        setPlaying(true);
       }, 100);
     }
   };
@@ -559,6 +646,7 @@ export default function KintsugiPlayer() {
             {playing ? '\u25AE\u25AE' : '\u25B6'}
           </button>
           <button onClick={() => {
+            if (stemSyncRef.current) { clearInterval(stemSyncRef.current); stemSyncRef.current = null; }
             stemAudioRef.current.forEach(sa => { sa.el.pause(); sa.el.currentTime = 0; });
             if (videoRef.current && currentSong?.videoUrl) {
               videoRef.current.pause();
@@ -591,6 +679,7 @@ export default function KintsugiPlayer() {
           <div style={{ padding: 4, position: 'relative' }}>
             <video
               ref={videoRef}
+              crossOrigin="anonymous"
               muted={currentSong.mediaType !== 'video'}
               playsInline
               style={{
@@ -749,11 +838,31 @@ export default function KintsugiPlayer() {
                       setTimeout(() => {
                         const ctx = ctxRef.current;
                         if (ctx?.state === 'suspended') ctx.resume();
-                        stemAudioRef.current.forEach(sa => sa.el.play());
-                        if (videoRef.current && song.videoUrl) {
-                          videoRef.current.currentTime = 0;
-                          videoRef.current.play();
-                        }
+                        // Wait for all stems then sync-play
+                        const allReady = stemAudioRef.current.map(sa =>
+                          new Promise<void>(resolve => {
+                            if (sa.el.readyState >= 3) { resolve(); return; }
+                            const handler = () => { sa.el.removeEventListener('canplay', handler); resolve(); };
+                            sa.el.addEventListener('canplay', handler);
+                            setTimeout(resolve, 500);
+                          })
+                        );
+                        Promise.all(allReady).then(() => {
+                          stemAudioRef.current.forEach(sa => { sa.el.currentTime = 0; sa.el.play(); });
+                          if (videoRef.current && song.videoUrl) {
+                            videoRef.current.currentTime = 0;
+                            videoRef.current.play();
+                          }
+                          if (stemSyncRef.current) clearInterval(stemSyncRef.current);
+                          stemSyncRef.current = setInterval(() => {
+                            const master = stemAudioRef.current[0]?.el;
+                            if (!master || master.paused) return;
+                            const mt = master.currentTime;
+                            stemAudioRef.current.slice(1).forEach(sa => {
+                              if (Math.abs(sa.el.currentTime - mt) > 0.05) sa.el.currentTime = mt;
+                            });
+                          }, 2000);
+                        });
                         setPlaying(true);
                       }, 100);
                     }}
