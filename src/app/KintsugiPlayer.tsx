@@ -506,13 +506,11 @@ export default function KintsugiPlayer() {
           <div style={{ overflow: 'hidden', width: '100%' }}>
             <div style={{
               color: 'var(--lcd-text)', fontSize: '9px', whiteSpace: 'nowrap',
-              animation: trackName.length > 30 ? 'marquee 8s linear infinite' : 'none',
+              display: 'inline-block',
+              animation: 'ticker 12s linear infinite',
             }}>
-              {currentSong ? `${currentSong.artist} - ${trackName}` : trackName}
+              {currentSong ? `${currentSong.artist} — ${trackName}` : trackName}
             </div>
-          </div>
-          <div style={{ position: 'absolute', right: 8, bottom: 6, fontSize: '14px', color: 'var(--lcd-text)', fontFamily: "'Press Start 2P', monospace", textShadow: '0 0 6px var(--lcd-text)' }}>
-            {fmt(currentTime)}
           </div>
           <div style={{
             position: 'absolute', top: 0, right: 40, width: 1, height: '100%',
@@ -540,7 +538,7 @@ export default function KintsugiPlayer() {
         </div>
 
         {/* Transport controls */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 2, padding: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, padding: '4px' }}>
           <button onClick={() => playSongByOffset(-1)} style={btnStyle} title="Previous Song">{'\u23EE'}</button>
           <button onClick={togglePlay} style={{ ...btnStyle, color: playing ? 'var(--lcd-text)' : 'var(--accent)', minWidth: 36 }}>
             {playing ? '\u25AE\u25AE' : '\u25B6'}
@@ -554,6 +552,9 @@ export default function KintsugiPlayer() {
             setPlaying(false); setCurTime(0);
           }} style={btnStyle} title="Stop">{'\u25A0'}</button>
           <button onClick={() => playSongByOffset(1)} style={btnStyle} title="Next Song">{'\u23ED'}</button>
+          <span style={{ fontSize: '10px', color: 'var(--lcd-text)', fontFamily: "'Press Start 2P', monospace", textShadow: '0 0 6px var(--lcd-text)', marginLeft: 8 }}>
+            {fmt(currentTime)}{duration > 0 ? ` / ${fmt(duration)}` : ''}
+          </span>
         </div>
 
         {/* Volume row */}
@@ -808,7 +809,24 @@ export default function KintsugiPlayer() {
               <div style={{ fontSize: '6px', color: 'var(--text)', lineHeight: '1.6', marginBottom: 8 }}>{currentSong.description}</div>
               <div style={{ fontSize: '6px', color: 'var(--lcd-text-dim)', marginBottom: 2 }}>IPFS: {currentSong.ipfsCid.slice(0, 12)}...{currentSong.ipfsCid.slice(-6)}</div>
               <div style={{ fontSize: '6px', color: 'var(--lcd-text-dim)', marginBottom: 2 }}>Royalty: {currentSong.royalty}%</div>
-              <div style={{ fontSize: '6px', color: 'var(--lcd-text-dim)' }}>Album: {currentSong.album}</div>
+              <div style={{ fontSize: '6px', color: 'var(--lcd-text-dim)', marginBottom: 6 }}>Album: {currentSong.album}</div>
+              {currentSong.collection && (
+                <a
+                  href={currentSong.collection}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: '7px',
+                    color: 'var(--kintsugi-gold)',
+                    textDecoration: 'none',
+                    border: '1px solid var(--kintsugi-gold)',
+                    padding: '3px 6px',
+                    display: 'inline-block',
+                  }}
+                >
+                  {currentSong.collection.includes('zora.co') ? '→ VIEW ON ZORA' : '→ VIEW COLLECTION'}
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -834,7 +852,7 @@ export default function KintsugiPlayer() {
       </div>
 
       <style>{`
-        @keyframes marquee {
+        @keyframes ticker {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
