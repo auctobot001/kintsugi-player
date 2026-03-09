@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { coinbaseWallet } from 'wagmi/connectors';
 import sdk from '@farcaster/miniapp-sdk';
+import Hls from 'hls.js';
+import { LIBRARY, type TrackEntry } from '../lib/library';
 import './globals.css';
 
 /* ── Types ── */
@@ -15,21 +17,7 @@ interface Stem {
   solo: boolean;
 }
 
-interface SongEntry {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  description: string;
-  stems: { name: string; path: string }[];
-  coverPath: string;
-  ipfsCid: string;
-  ipfsImage: string;
-  collection: string;
-  royalty: number;
-  premium?: boolean;
-  x402Price?: string; // USDC price for x402 access
-}
+type SongEntry = TrackEntry;
 
 interface StemAudio {
   el: HTMLAudioElement;
@@ -37,68 +25,8 @@ interface StemAudio {
   gain: GainNode;
 }
 
-/* ── Song Library (IPFS provenance) ── */
-const LIBRARY: SongEntry[] = [
-  {
-    id: 'suddenly',
-    title: 'Suddenly (Remix)',
-    artist: 'Bootie Brown ft. Amy Correa Bell',
-    album: 'UltraHipFunkWave',
-    description: 'First collection ever minted by Bootie Brown. Featured in PROCESS Docuseries by Pattern Integrity Films.',
-    stems: [
-      { name: 'Vocal', path: '/audio/suddenly/vocal.mp3' },
-      { name: 'Rap', path: '/audio/suddenly/rap.mp3' },
-      { name: 'Drums', path: '/audio/suddenly/drums.mp3' },
-      { name: 'Bass', path: '/audio/suddenly/bass.mp3' },
-      { name: 'Synth', path: '/audio/suddenly/synth.mp3' },
-      { name: 'Perc & FX', path: '/audio/suddenly/perc-n-fx.mp3' },
-    ],
-    coverPath: '/audio/suddenly/cover.jpeg',
-    ipfsCid: 'QmbjqQauZxxA2Q9F5e6bAoAZf85HZxyzUyvRs17hydPZXV',
-    ipfsImage: 'ipfs://QmbjqQauZxxA2Q9F5e6bAoAZf85HZxyzUyvRs17hydPZXV/cover.jpeg',
-    collection: 'https://nftinfos.loopring.io/0x3f3624c5967059a1033888f2f8ff57bd4b18704f',
-    royalty: 10,
-  },
-  {
-    id: 'get-it-right',
-    title: 'Get It Right',
-    artist: 'Bootie Brown prod. Kurser',
-    album: 'UltraHipFunkWave',
-    description: 'BB goes back to the Boom Bap. Produced by Kurser out of Paris. 2 Grammy nominations for Gorillaz contributions.',
-    stems: [
-      { name: 'Vocals', path: '/audio/get-it-right/vocals.mp3' },
-      { name: 'Drum', path: '/audio/get-it-right/drum.mp3' },
-      { name: 'Bass', path: '/audio/get-it-right/bass.mp3' },
-      { name: 'Synths', path: '/audio/get-it-right/synths.mp3' },
-    ],
-    coverPath: '/audio/get-it-right/cover.png',
-    ipfsCid: 'QmSzbxunHatTJ8ht3T4A45rvi6tMSYKqJqctwFH2L2GgpE',
-    ipfsImage: 'ipfs://QmSzbxunHatTJ8ht3T4A45rvi6tMSYKqJqctwFH2L2GgpE/cover.png',
-    collection: 'https://nftinfos.loopring.io/0xd0351558182f1165aa956739c4502895e85ef4ba',
-    royalty: 10,
-  },
-  {
-    id: 'satisfied',
-    title: 'Satisfied',
-    artist: 'Bootie Brown & Kurser',
-    album: 'Chapter 1',
-    description: 'Questions the passage of time and superficial purchases. Released via Chapter 1. Featured in PROCESS Docuseries.',
-    stems: [
-      { name: 'Vocal', path: '/audio/satisfied/vocal.mp3' },
-      { name: 'Drums', path: '/audio/satisfied/drums.mp3' },
-      { name: 'Bass', path: '/audio/satisfied/bass.mp3' },
-      { name: 'Synths', path: '/audio/satisfied/synths.mp3' },
-      { name: 'Hooks & FX', path: '/audio/satisfied/hooks-n-fx.mp3' },
-    ],
-    coverPath: '/audio/satisfied/cover.png',
-    ipfsCid: 'QmcVS4UvMXeH453F2A1U7KY5D9D1TSQiw9PbCAhRN8wmgE',
-    ipfsImage: 'ipfs://QmcVS4UvMXeH453F2A1U7KY5D9D1TSQiw9PbCAhRN8wmgE/cover.png',
-    collection: 'https://nftinfos.loopring.io/0xe692526e868fab72f85f48dd58b720eb9245e121',
-    royalty: 10,
-    premium: true,
-    x402Price: '0.50',
-  },
-];
+const STEM_TRACKS = LIBRARY.filter(t => t.mediaType === 'stems');
+const VIDEO_TRACKS = LIBRARY.filter(t => t.mediaType === 'video');
 
 /* ── Component ── */
 export default function KintsugiPlayer() {
@@ -120,6 +48,9 @@ export default function KintsugiPlayer() {
   const [libVisible, setLibVisible] = useState(true);
   const [mixerVisible, setMixerVisible] = useState(true);
   const [view, setView] = useState<'library' | 'info'>('library');
+  const [videoVisible, setVideoVisible] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
   // Wallet connection via wagmi
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
@@ -155,51 +86,120 @@ export default function KintsugiPlayer() {
     stemAudioRef.current = [];
   }, []);
 
+  /* ── Cleanup video ── */
+  const cleanupVideo = useCallback(() => {
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.removeAttribute('src');
+      videoRef.current.load();
+    }
+  }, []);
+
+  /* ── Setup video for a song ── */
+  const setupVideo = useCallback((videoUrl: string) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true; // Audio comes from stems
+    video.playsInline = true;
+
+    if (videoUrl.includes('.m3u8') && Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(videoUrl);
+      hls.attachMedia(video);
+      hlsRef.current = hls;
+    } else {
+      // MP4 or native HLS (Safari)
+      video.src = videoUrl;
+    }
+  }, []);
+
   /* ── Load song ── */
   const loadSong = useCallback((song: SongEntry) => {
     cleanupStems();
-    const ctx = getCtx();
-    const analyser = analyserRef.current!;
-
-    const newStems: Stem[] = song.stems.map(s => ({
-      name: s.name,
-      path: s.path,
-      volume: 100,
-      muted: false,
-      solo: false,
-    }));
-
-    const stemAudios: StemAudio[] = song.stems.map(s => {
-      const el = new Audio();
-      el.crossOrigin = 'anonymous';
-      el.preload = 'auto';
-      el.src = s.path;
-      const source = ctx.createMediaElementSource(el);
-      const gain = ctx.createGain();
-      gain.gain.value = 1;
-      source.connect(gain);
-      gain.connect(analyser);
-      return { el, source, gain };
-    });
-
-    stemAudioRef.current = stemAudios;
-    setStems(newStems);
+    cleanupVideo();
     setCurrentSong(song);
     setPlaying(false);
     setCurTime(0);
 
-    // Get duration from first stem
-    const firstEl = stemAudios[0]?.el;
-    if (firstEl) {
-      const onMeta = () => {
-        setDuration(firstEl.duration);
-        firstEl.removeEventListener('loadedmetadata', onMeta);
-      };
-      firstEl.addEventListener('loadedmetadata', onMeta);
-    }
-  }, [cleanupStems, getCtx]);
+    const isVideoOnly = song.mediaType === 'video';
 
-  /* ── Play/Pause all stems ── */
+    if (!isVideoOnly && song.stems.length > 0) {
+      // Stem-based track
+      const ctx = getCtx();
+      const analyser = analyserRef.current!;
+
+      const newStems: Stem[] = song.stems.map(s => ({
+        name: s.name,
+        path: s.path,
+        volume: 100,
+        muted: false,
+        solo: false,
+      }));
+
+      const stemAudios: StemAudio[] = song.stems.map(s => {
+        const el = new Audio();
+        el.crossOrigin = 'anonymous';
+        el.preload = 'auto';
+        el.src = s.path;
+        const source = ctx.createMediaElementSource(el);
+        const gain = ctx.createGain();
+        gain.gain.value = 1;
+        source.connect(gain);
+        gain.connect(analyser);
+        return { el, source, gain };
+      });
+
+      stemAudioRef.current = stemAudios;
+      setStems(newStems);
+
+      // Get duration from first stem
+      const firstEl = stemAudios[0]?.el;
+      if (firstEl) {
+        const onMeta = () => {
+          setDuration(firstEl.duration);
+          firstEl.removeEventListener('loadedmetadata', onMeta);
+        };
+        firstEl.addEventListener('loadedmetadata', onMeta);
+      }
+
+      // Setup companion video if track has one (muted — stems are audio)
+      if (song.videoUrl) {
+        setupVideo(song.videoUrl);
+      }
+    } else {
+      // Video-only track — video IS the audio source
+      setStems([]);
+      stemAudioRef.current = [];
+
+      if (song.videoUrl) {
+        const video = videoRef.current;
+        if (!video) return;
+        video.muted = false; // Video audio is the primary source
+        video.playsInline = true;
+
+        if (song.videoUrl.includes('.m3u8') && Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(song.videoUrl);
+          hls.attachMedia(video);
+          hlsRef.current = hls;
+        } else {
+          video.src = song.videoUrl;
+        }
+
+        const onMeta = () => {
+          setDuration(video.duration);
+          video.removeEventListener('loadedmetadata', onMeta);
+        };
+        video.addEventListener('loadedmetadata', onMeta);
+      }
+    }
+  }, [cleanupStems, cleanupVideo, setupVideo, getCtx]);
+
+  /* ── Play/Pause ── */
   const togglePlay = useCallback(() => {
     if (!currentSong) {
       if (LIBRARY.length > 0) loadSong(LIBRARY[0]);
@@ -208,16 +208,30 @@ export default function KintsugiPlayer() {
     const ctx = ctxRef.current;
     if (ctx?.state === 'suspended') ctx.resume();
 
+    const video = videoRef.current;
+    const isVideoOnly = currentSong.mediaType === 'video';
+
     if (playing) {
       stemAudioRef.current.forEach(sa => sa.el.pause());
+      if (video && currentSong.videoUrl) video.pause();
       setPlaying(false);
+    } else if (isVideoOnly) {
+      // Video-only: video element is the sole playback source
+      if (video && currentSong.videoUrl) {
+        video.play();
+      }
+      setPlaying(true);
     } else {
-      // Sync all stems to same time and play
+      // Stem track: sync all stems and optional companion video
       const t = stemAudioRef.current[0]?.el.currentTime ?? 0;
       stemAudioRef.current.forEach(sa => {
         sa.el.currentTime = t;
         sa.el.play();
       });
+      if (video && currentSong.videoUrl) {
+        video.currentTime = t;
+        video.play();
+      }
       setPlaying(true);
     }
   }, [currentSong, playing, loadSong]);
@@ -225,21 +239,26 @@ export default function KintsugiPlayer() {
   /* ── Time update ── */
   useEffect(() => {
     if (!playing) return;
-    const firstEl = stemAudioRef.current[0]?.el;
-    if (!firstEl) return;
-    const tick = () => { if (!dragging) setCurTime(firstEl.currentTime); };
+    const isVideoOnly = currentSong?.mediaType === 'video';
+    const timeSource = isVideoOnly ? videoRef.current : stemAudioRef.current[0]?.el;
+    if (!timeSource) return;
+    const tick = () => { if (!dragging) setCurTime(timeSource.currentTime); };
     const onEnd = () => {
       setPlaying(false);
       setCurTime(0);
       stemAudioRef.current.forEach(sa => { sa.el.currentTime = 0; });
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
     };
-    firstEl.addEventListener('timeupdate', tick);
-    firstEl.addEventListener('ended', onEnd);
+    timeSource.addEventListener('timeupdate', tick);
+    timeSource.addEventListener('ended', onEnd);
     return () => {
-      firstEl.removeEventListener('timeupdate', tick);
-      firstEl.removeEventListener('ended', onEnd);
+      timeSource.removeEventListener('timeupdate', tick);
+      timeSource.removeEventListener('ended', onEnd);
     };
-  }, [playing, dragging]);
+  }, [playing, dragging, currentSong]);
 
   /* ── Visualizer ── */
   const drawViz = useCallback(() => {
@@ -276,6 +295,20 @@ export default function KintsugiPlayer() {
     if (playing) drawViz();
     return () => cancelAnimationFrame(animFrameRef.current);
   }, [playing, drawViz]);
+
+  /* ── Re-attach video when panel becomes visible ── */
+  useEffect(() => {
+    if (videoVisible && currentSong?.videoUrl && videoRef.current) {
+      const video = videoRef.current;
+      // Only setup if not already loaded
+      if (!video.src && !hlsRef.current) {
+        setupVideo(currentSong.videoUrl);
+      }
+      // Sync to current playback position
+      video.currentTime = stemAudioRef.current[0]?.el.currentTime ?? 0;
+      if (playing) video.play();
+    }
+  }, [videoVisible, currentSong, playing, setupVideo]);
 
   /* ── Signal MiniApp ready ── */
   useEffect(() => {
@@ -337,6 +370,10 @@ export default function KintsugiPlayer() {
     if (duration) {
       const t = pct * duration;
       stemAudioRef.current.forEach(sa => { sa.el.currentTime = t; });
+      if (videoRef.current && currentSong?.videoUrl) {
+        videoRef.current.currentTime = t;
+      }
+      // For video-only, video is the time source
       setCurTime(t);
     }
   };
@@ -352,12 +389,24 @@ export default function KintsugiPlayer() {
     const idx = LIBRARY.findIndex(s => s.id === currentSong?.id);
     const next = idx + offset;
     if (next >= 0 && next < LIBRARY.length) {
-      loadSong(LIBRARY[next]);
-      // Auto-play after a tick to let audio elements initialize
+      const nextSong = LIBRARY[next];
+      loadSong(nextSong);
+      // Auto-play after a tick to let elements initialize
       setTimeout(() => {
         const ctx = ctxRef.current;
         if (ctx?.state === 'suspended') ctx.resume();
-        stemAudioRef.current.forEach(sa => sa.el.play());
+        if (nextSong.mediaType === 'video') {
+          if (videoRef.current) {
+            videoRef.current.currentTime = 0;
+            videoRef.current.play();
+          }
+        } else {
+          stemAudioRef.current.forEach(sa => sa.el.play());
+          if (videoRef.current && nextSong.videoUrl) {
+            videoRef.current.currentTime = 0;
+            videoRef.current.play();
+          }
+        }
         setPlaying(true);
       }, 100);
     }
@@ -435,6 +484,7 @@ export default function KintsugiPlayer() {
             >
               {isConnected ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : '\u{1F517} WALLET'}
             </button>
+            {currentSong?.videoUrl && <button onClick={() => setVideoVisible(!videoVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: videoVisible ? 'var(--lcd-text)' : 'var(--text)' }}>VID</button>}
             <button onClick={() => setEqVisible(!eqVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: eqVisible ? 'var(--lcd-text)' : 'var(--text)' }}>EQ</button>
             <button onClick={() => setMixerVisible(!mixerVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: mixerVisible ? 'var(--lcd-text)' : 'var(--text)' }}>MIX</button>
             <button onClick={() => setLibVisible(!libVisible)} style={{ ...btnSmall, fontSize: '6px', padding: '2px 4px', color: libVisible ? 'var(--lcd-text)' : 'var(--text)' }}>LIB</button>
@@ -447,7 +497,9 @@ export default function KintsugiPlayer() {
           ...bevel(true), position: 'relative', overflow: 'hidden', height: 52,
         }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: '7px', color: 'var(--lcd-text-dim)' }}>{stems.length} stems</span>
+            <span style={{ fontSize: '7px', color: 'var(--lcd-text-dim)' }}>
+              {currentSong?.mediaType === 'video' ? '🎬 video' : `${stems.length} stems`}
+            </span>
             <span style={{ fontSize: '7px', color: 'var(--lcd-text-dim)' }}>44kHz</span>
             <span style={{ fontSize: '7px', color: playing ? 'var(--lcd-text)' : 'var(--lcd-text-dim)' }}>stereo</span>
           </div>
@@ -495,6 +547,10 @@ export default function KintsugiPlayer() {
           </button>
           <button onClick={() => {
             stemAudioRef.current.forEach(sa => { sa.el.pause(); sa.el.currentTime = 0; });
+            if (videoRef.current && currentSong?.videoUrl) {
+              videoRef.current.pause();
+              videoRef.current.currentTime = 0;
+            }
             setPlaying(false); setCurTime(0);
           }} style={btnStyle} title="Stop">{'\u25A0'}</button>
           <button onClick={() => playSongByOffset(1)} style={btnStyle} title="Next Song">{'\u23ED'}</button>
@@ -510,6 +566,28 @@ export default function KintsugiPlayer() {
         </div>
       </div>
 
+      {/* === VIDEO WINDOW === */}
+      {(videoVisible || currentSong?.mediaType === 'video') && currentSong?.videoUrl && (
+        <div style={windowBox}>
+          <div style={{ ...titleBar, justifyContent: 'flex-start' }}>
+            <span style={titleText}>{currentSong.mediaType === 'video' ? 'VIDEO PLAYBACK' : 'VIDEO'}</span>
+          </div>
+          <div style={{ padding: 4 }}>
+            <video
+              ref={videoRef}
+              muted={currentSong.mediaType !== 'video'}
+              playsInline
+              style={{
+                width: '100%',
+                display: 'block',
+                ...bevel(true),
+                background: '#000',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* === EQ WINDOW === */}
       {eqVisible && (
         <div style={windowBox}>
@@ -523,7 +601,7 @@ export default function KintsugiPlayer() {
       )}
 
       {/* === STEM MIXER WINDOW === */}
-      {mixerVisible && stems.length > 0 && (
+      {mixerVisible && stems.length > 0 && currentSong?.mediaType !== 'video' && (
         <div style={windowBox}>
           <div style={titleBar}>
             <span style={titleText}>STEM MIXER</span>
@@ -612,12 +690,16 @@ export default function KintsugiPlayer() {
                 >INFO</button>
               )}
             </div>
-            <span style={{ fontSize: '6px', color: 'var(--text)' }}>{LIBRARY.length} songs</span>
+            <span style={{ fontSize: '6px', color: 'var(--text)' }}>{LIBRARY.length} tracks</span>
           </div>
 
           {view === 'library' ? (
-            <div style={{ ...bevel(true), margin: 4 }}>
-              {LIBRARY.map((song) => {
+            <div style={{ ...bevel(true), margin: 4, maxHeight: 300, overflowY: 'auto' }}>
+              {/* STEMS section */}
+              <div style={{ padding: '4px 6px', background: 'var(--win-title)', borderBottom: '1px solid var(--groove-dark)' }}>
+                <span style={{ fontSize: '6px', color: 'var(--accent)', letterSpacing: '2px' }}>🎵 STEMS ({STEM_TRACKS.length})</span>
+              </div>
+              {STEM_TRACKS.map((song) => {
                 const isActive = currentSong?.id === song.id;
                 return (
                   <div
@@ -628,6 +710,10 @@ export default function KintsugiPlayer() {
                         const ctx = ctxRef.current;
                         if (ctx?.state === 'suspended') ctx.resume();
                         stemAudioRef.current.forEach(sa => sa.el.play());
+                        if (videoRef.current && song.videoUrl) {
+                          videoRef.current.currentTime = 0;
+                          videoRef.current.play();
+                        }
                         setPlaying(true);
                       }, 100);
                     }}
@@ -661,6 +747,56 @@ export default function KintsugiPlayer() {
                       <span style={{ fontSize: '5px', color: 'var(--kintsugi-gold)', border: '1px solid var(--kintsugi-gold)', padding: '1px 3px', marginRight: 4 }}>x402</span>
                     )}
                     <span style={{ fontSize: '6px', color: 'var(--accent-dim)' }}>{song.stems.length} stems</span>
+                  </div>
+                );
+              })}
+
+              {/* VIDEO section */}
+              <div style={{ padding: '4px 6px', background: 'var(--win-title)', borderBottom: '1px solid var(--groove-dark)', marginTop: 2 }}>
+                <span style={{ fontSize: '6px', color: 'var(--accent)', letterSpacing: '2px' }}>🎬 VIDEO ({VIDEO_TRACKS.length})</span>
+              </div>
+              {VIDEO_TRACKS.map((song) => {
+                const isActive = currentSong?.id === song.id;
+                return (
+                  <div
+                    key={song.id}
+                    onClick={() => {
+                      loadSong(song);
+                      setTimeout(() => {
+                        if (videoRef.current) {
+                          videoRef.current.currentTime = 0;
+                          videoRef.current.play();
+                        }
+                        setPlaying(true);
+                      }, 200);
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px',
+                      background: isActive ? 'var(--win-title)' : 'transparent',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--groove-dark)',
+                    }}
+                  >
+                    <span style={{
+                      fontSize: '7px',
+                      color: isActive && playing ? 'var(--lcd-text)' : 'var(--lcd-text-dim)',
+                      width: 12,
+                    }}>
+                      {isActive && playing ? '\u25B6' : '🎬'}
+                    </span>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{
+                        fontSize: '8px',
+                        color: isActive ? 'var(--text-bright)' : 'var(--text)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>{song.title}</div>
+                      <div style={{
+                        fontSize: '6px',
+                        color: 'var(--lcd-text-dim)',
+                        marginTop: 2,
+                      }}>{song.artist}</div>
+                    </div>
+                    <span style={{ fontSize: '6px', color: 'var(--accent-dim)' }}>video</span>
                   </div>
                 );
               })}

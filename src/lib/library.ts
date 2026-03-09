@@ -1,5 +1,7 @@
 /** Shared track library — single source of truth for client + API routes */
 
+import { ZORA_LIBRARY } from '../data/zora-library';
+
 export interface StemDef {
   name: string;
   path: string;
@@ -19,9 +21,11 @@ export interface TrackEntry {
   royalty: number;
   premium?: boolean;
   x402Price?: string;
+  videoUrl?: string;   // CDN URL for music video (MP4 or HLS .m3u8)
+  mediaType: 'stems' | 'video';
 }
 
-export const LIBRARY: TrackEntry[] = [
+const STEM_TRACKS: TrackEntry[] = [
   {
     id: 'suddenly',
     title: 'Suddenly (Remix)',
@@ -42,6 +46,7 @@ export const LIBRARY: TrackEntry[] = [
     ipfsImage: 'ipfs://QmbjqQauZxxA2Q9F5e6bAoAZf85HZxyzUyvRs17hydPZXV/cover.jpeg',
     collection: 'https://nftinfos.loopring.io/0x3f3624c5967059a1033888f2f8ff57bd4b18704f',
     royalty: 10,
+    mediaType: 'stems',
   },
   {
     id: 'get-it-right',
@@ -61,6 +66,7 @@ export const LIBRARY: TrackEntry[] = [
     ipfsImage: 'ipfs://QmSzbxunHatTJ8ht3T4A45rvi6tMSYKqJqctwFH2L2GgpE/cover.png',
     collection: 'https://nftinfos.loopring.io/0xd0351558182f1165aa956739c4502895e85ef4ba',
     royalty: 10,
+    mediaType: 'stems',
   },
   {
     id: 'satisfied',
@@ -83,8 +89,11 @@ export const LIBRARY: TrackEntry[] = [
     royalty: 10,
     premium: true,
     x402Price: '0.50',
+    mediaType: 'stems',
   },
 ];
+
+export const LIBRARY: TrackEntry[] = [...STEM_TRACKS, ...ZORA_LIBRARY];
 
 export function getTrackById(id: string): TrackEntry | undefined {
   return LIBRARY.find((t) => t.id === id);
