@@ -36,8 +36,6 @@ export default function KintsugiPlayer() {
   const ctxRef = useRef<AudioContext | null>(null);
   const mergerRef = useRef<ChannelMergerNode | null>(null);
   const stemAudioRef = useRef<StemAudio[]>([]);
-  const videoSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const videoGainRef = useRef<GainNode | null>(null);
   const stemSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [currentSong, setCurrentSong] = useState<SongEntry | null>(null);
@@ -191,10 +189,11 @@ export default function KintsugiPlayer() {
     const video = videoRef.current;
     if (!video) return;
 
-    // Set up video source
-    video.crossOrigin = 'anonymous';
+    // Video-only: let the video element handle audio natively (no Web Audio routing)
+    // Web Audio's createMediaElementSource silently kills audio when CORS fails on Zora/IPFS
     video.muted = false;
     video.playsInline = true;
+    video.volume = masterVolume / 100;
 
     if (currentSong.videoUrl.includes('.m3u8') && Hls.isSupported()) {
       const hls = new Hls();
@@ -203,25 +202,6 @@ export default function KintsugiPlayer() {
       hlsRef.current = hls;
     } else {
       video.src = currentSong.videoUrl;
-    }
-
-    // Connect to Web Audio for EQ visualization
-    try {
-      const ctx = getCtx();
-      const analyser = analyserRef.current!;
-      if (!videoSourceRef.current) {
-        const source = ctx.createMediaElementSource(video);
-        const gain = ctx.createGain();
-        gain.gain.value = masterVolume / 100;
-        source.connect(gain);
-        gain.connect(analyser);
-        videoSourceRef.current = source;
-        videoGainRef.current = gain;
-      } else if (videoGainRef.current) {
-        videoGainRef.current.gain.value = masterVolume / 100;
-      }
-    } catch {
-      // CORS or Web Audio error — video audio will still play from element directly
     }
 
     const onMeta = () => {
@@ -297,11 +277,11 @@ export default function KintsugiPlayer() {
           if (!master || master.paused) return;
           const masterTime = master.currentTime;
           stemAudioRef.current.slice(1).forEach(sa => {
-            if (Math.abs(sa.el.currentTime - masterTime) > 0.05) {
+            if (Math.abs(sa.el.currentTime - masterTime) > 0.02) {
               sa.el.currentTime = masterTime;
             }
           });
-        }, 2000);
+        }, 1000);
       });
 
       setPlaying(true);
@@ -433,9 +413,9 @@ export default function KintsugiPlayer() {
   // Keep master volume in sync
   useEffect(() => {
     updateStemGain(stems);
-    // Also update video gain for video-only tracks
-    if (videoGainRef.current) {
-      videoGainRef.current.gain.value = masterVolume / 100;
+    // Also update video volume for video-only tracks (native audio, not Web Audio)
+    if (currentSong?.mediaType === 'video' && videoRef.current) {
+      videoRef.current.volume = masterVolume / 100;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterVolume]);
@@ -504,9 +484,9 @@ export default function KintsugiPlayer() {
               if (!master || master.paused) return;
               const mt = master.currentTime;
               stemAudioRef.current.slice(1).forEach(sa => {
-                if (Math.abs(sa.el.currentTime - mt) > 0.05) sa.el.currentTime = mt;
+                if (Math.abs(sa.el.currentTime - mt) > 0.02) sa.el.currentTime = mt;
               });
-            }, 2000);
+            }, 1000);
           });
           setPlaying(true);
         }
@@ -859,9 +839,9 @@ export default function KintsugiPlayer() {
                             if (!master || master.paused) return;
                             const mt = master.currentTime;
                             stemAudioRef.current.slice(1).forEach(sa => {
-                              if (Math.abs(sa.el.currentTime - mt) > 0.05) sa.el.currentTime = mt;
+                              if (Math.abs(sa.el.currentTime - mt) > 0.02) sa.el.currentTime = mt;
                             });
-                          }, 2000);
+                          }, 1000);
                         });
                         setPlaying(true);
                       }, 100);
