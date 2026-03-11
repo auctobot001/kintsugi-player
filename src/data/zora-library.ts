@@ -410,7 +410,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'all-you-need-is-one',
     title: 'All You Need Is One',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Meet Fuse, here to welcome you to the Base App. All you need is one….',
     stems: [],
@@ -425,7 +425,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'introducing-stopmo',
     title: 'Introducing $StopMo',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Meet Clanky, protector of the chain while the rest of us get our\nClanker & Bankr on.\n\nOfficial $StopMo token: https://clanker.world/clanker/0xBDC72595547459f2A49192c410A026dcCf693B07\n\nFlannel Donut is',
     stems: [],
@@ -440,7 +440,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'proof-of-work',
     title: 'Proof of Work',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Clank Clank',
     stems: [],
@@ -455,7 +455,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: '3x24',
     title: '3x24',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Animating for us here is Jeff Riley: His work appears in Academy Award-winning and nominated films including Guillermo del Toro\'s Pinocchio, LAIKA\'s Coraline, and Wes Anderson\'s Fantastic Mr. Fox, amo',
     stems: [],
@@ -470,7 +470,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'tomorrow',
     title: 'Tomorrow',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Aynio',
     stems: [],
@@ -485,7 +485,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'view-of-the-cafe-side',
     title: 'View of the cafe side…',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'And into the live stop motion set viewable from 3 sides plus a catwalk above 🙌',
     stems: [],
@@ -500,7 +500,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'straight-ahead',
     title: 'Straight Ahead',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'World class animator, Suzanne Twining, talks about how stop motion uses every physical fine art form to build characters and worlds in which our stories can unfold. From the Film3 Festival at Onchain ',
     stems: [],
@@ -515,7 +515,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'puppet-fab',
     title: 'Puppet Fab',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Secret project incoming! Can you guess what we\'re building?',
     stems: [],
@@ -530,7 +530,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'leg-day',
     title: 'Leg Day',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Think u know Leg Day? You don’t know SQUAT. Our next stop motion animated 8-legged series is officially in production. Animated by Suzanne Twining, Directed by Rob Shaw.',
     stems: [],
@@ -545,7 +545,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'the-iron-menace',
     title: 'The IRON Menace',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'The Iron Menace is a stop motion animated short film shown inside of our stop motion animated short film The Lever Puller, dropping on Zora very very soon. \nWritten, animated and directed by Rob Shaw.',
     stems: [],
@@ -560,7 +560,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'on-our-way-basecamp',
     title: 'On Our Way Basecamp 🤘',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -575,7 +575,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'puppet-fab-production',
     title: 'Puppet Fab Production ',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'We’re already in puppet fab on our next production which is a series of 8 short films, animated by Suzanne Twining. Can’t wait to share more. \n\nFlannel Donut is an onchain stop motion animation studio',
     stems: [],
@@ -590,7 +590,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'fd-paint',
     title: 'FD paint ',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -605,7 +605,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'two-bottles',
     title: 'TWO BOTTLES',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'A chemist and a spy, Bert has a Two Bottle system to read other people\'s thoughts. In this stop-motion animated film, the introvert enters Chelton Hotel with the goal of spying on a man named Gregor, ',
     stems: [],
@@ -620,7 +620,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'the-machine',
     title: 'The Machine',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'The Machine is a stop motion animated short film directed and animated by Emmy winner Rob Shaw. The Machine also won Best Animated Short at the the Atlanta Film Festival.',
     stems: [],
@@ -635,7 +635,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'the-machine-trailer',
     title: 'The Machine trailer',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'We are celebrating Indie Animation Day by posting the trailer for our award winning stop motion animated film: The Machine. Which also won Best Animated Short at the Atlanta film Festival. As always, ',
     stems: [],
@@ -650,7 +650,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'this-will-only-hurt-for-a-second',
     title: 'This Will Only Hurt for a Second',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Spent three days building this stratacut face in clay, for just a few seconds of animation. So much fun playing with animation along the z axis.',
     stems: [],
@@ -665,7 +665,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'rob-s-stroll',
     title: 'Rob’s Stroll',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'From You Play Too Much Episode 5 by Emmy winning director Rob Shaw. Starring Fred Armisen.',
     stems: [],
@@ -680,7 +680,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'the-dance',
     title: 'The Dance',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'From You Play Too Much Episode 4 by Emmy winning director Rob Shaw. Starring Fred Armisen.',
     stems: [],
@@ -695,7 +695,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'open-neck-no-respect',
     title: 'Open Neck, No Respect',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'From You Play Too Much Episode 4 by Emmy winning director Rob Shaw. Starring Fred Armisen.',
     stems: [],
@@ -710,7 +710,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'avoid-those-x-s',
     title: 'Avoid Those X\'s',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'From You Play Too Much Ep 4. By Emmy Winning Director Rob Shaw. Starring Fred Armisen.',
     stems: [],
@@ -725,7 +725,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'the-next-big-thing',
     title: 'The Next Big Thing',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: '"You have a huge industry of people pretending that they know what’s gonna be successful and they have no fucking idea, and they’re really just waiting for creative people to accidentally make the nex',
     stems: [],
@@ -740,7 +740,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'the-car-that-turned-into-a-friend',
     title: 'The Car That Turned Into a Friend',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'From You Play Too Much, Episode 3. By Emmy Winning Director Rob Shaw. Starring Fred Armisen.',
     stems: [],
@@ -755,7 +755,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'red-to-green-buck-gg',
     title: 'Red to Green Buck, GG',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'Spec ad written, directed and animated by Flannel Donut',
     stems: [],
@@ -770,7 +770,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'you-play-too-much-ep-6-1st-floor-bathroom',
     title: 'You Play Too Much Ep 6: 1st Floor Bathroom',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'You Play Too Much is an animated comic strip about navigating childhood in 1980s Philly. From director Rob Shaw, starring Fred Armisen as Lil’ Robbie. This is the Final Episode for Season One. Thanks ',
     stems: [],
@@ -785,7 +785,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'you-play-too-much-ep-3-robot-aliens',
     title: 'You Play Too Much: Ep 3 Robot Aliens',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'You Play Too Much is an animated comic strip about navigating childhood in 1980s Philly. From director Rob Shaw, starring Fred Armisen as Lil’ Robbie.',
     stems: [],
@@ -800,7 +800,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'battle-scars',
     title: 'Battle Scars',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'In this Flannel Donut interview, co-founders Kristen + Rob  talk about how storytelling works in terms of being the underdog and how personal insecurities offer up raw materials for creating your art.',
     stems: [],
@@ -815,7 +815,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'meet-flannel-donut',
     title: 'Meet Flannel Donut',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'A full-service, semi-irreverent blockchain animation studio leading the film3 revolution at 24 fps 🌲🍩',
     stems: [],
@@ -830,7 +830,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'you-play-too-much-ep-5-stroll',
     title: 'You Play Too Much Ep 5 Stroll',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'You Play Too Much is an animated comic strip about navigating childhood in 1980s Philly. From director Rob Shaw, starring Fred Armisen as Lil’ Robbie.',
     stems: [],
@@ -845,7 +845,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'you-play-too-much-ep-4-open-neck',
     title: 'You Play Too Much: Ep 4 Open Neck',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'You Play Too Much is an animated comic strip about navigating childhood in 1980s Philly. From director Rob Shaw, starring Fred Armisen as Lil’ Robbie.',
     stems: [],
@@ -860,7 +860,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'you-play-too-much-ep-2-friends',
     title: 'You Play Too Much Ep 2: Friends',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'You Play Too Much is an animated comic strip about navigating childhood in 1980s Philly. From director Rob Shaw, starring Fred Armisen as Lil’ Robbie.',
     stems: [],
@@ -875,7 +875,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'you-play-too-much-ep-1-hulk-hand',
     title: 'You Play Too Much Ep 1: Hulk Hand',
-    artist: 'Pattern Integrity Films',
+    artist: 'Flannel Donut',
     album: 'Zora Video Coins',
     description: 'You Play Too Much is an animated comic strip about navigating childhood in 1980s Philly. From Emmy winning director Rob Shaw, starring Fred Armisen as Lil’ Robbie.',
     stems: [],
@@ -890,7 +890,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'block-party-stop-motion-animation-timelapse',
     title: 'Block Party Stop motion animation timelapse',
-    artist: 'Pattern Integrity Films',
+    artist: 'Malcolm La Monster',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -905,7 +905,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'i-made-a-mini-epic-cinematic-for-titan13',
     title: 'I made a mini epic cinematic for Titan13',
-    artist: 'Pattern Integrity Films',
+    artist: 'Malcolm La Monster',
     album: 'Zora Video Coins',
     description: 'Here’s the behind the scenes timelapse footage along side the final animation for a stop motion cinematic that I created in collaboration with Titan13 \n\nAnimation, lighting, sets, vfx and sound design',
     stems: [],
@@ -920,7 +920,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'foil-guy-vs-anvil-an-award-winning-stop-motion-short',
     title: 'Foil Guy vs ANVIL - an award winning stop motion short',
-    artist: 'Pattern Integrity Films',
+    artist: 'Malcolm La Monster',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -935,7 +935,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'titan13-stop-motion-cinematic',
     title: 'Titan13 Stop Motion Cinematic',
-    artist: 'Pattern Integrity Films',
+    artist: 'Malcolm La Monster',
     album: 'Zora Video Coins',
     description: 'I recently directed this stop motion animated cinematic for Titan13\nAnimation, lighting, sets, vfx and sound design also by me! \n\nAnimation, lighting, sets, vfx and sound design also by me!',
     stems: [],
@@ -950,7 +950,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'foil-guy-vs-anvil-timelapse',
     title: 'Foil Guy vs ANVIL timelapse',
-    artist: 'Pattern Integrity Films',
+    artist: 'Malcolm La Monster',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -965,7 +965,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'block-party',
     title: 'BLOCK PARTY',
-    artist: 'Pattern Integrity Films',
+    artist: 'Malcolm La Monster',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -980,7 +980,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'where-it-all-started',
     title: 'Where it all started...',
-    artist: 'Pattern Integrity Films',
+    artist: 'Kung Fu Dork',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -995,7 +995,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'glooptopian',
     title: 'Glooptopian',
-    artist: 'Pattern Integrity Films',
+    artist: 'Kung Fu Dork',
     album: 'Zora Video Coins',
     description: 'Look what Morty found...',
     stems: [],
@@ -1010,7 +1010,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'bts-stop-motion-kung-fu-monk',
     title: 'BTS Stop Motion Kung Fu Monk',
-    artist: 'Pattern Integrity Films',
+    artist: 'Kung Fu Dork',
     album: 'Zora Video Coins',
     description: 'how it started vs how it ended',
     stems: [],
@@ -1025,7 +1025,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'ai-to-the-rescue',
     title: 'Ai To The Rescue!',
-    artist: 'Pattern Integrity Films',
+    artist: 'Kung Fu Dork',
     album: 'Zora Video Coins',
     description: 'animators beware!',
     stems: [],
@@ -1040,7 +1040,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'rick-morty-bts',
     title: 'Rick & Morty BTS',
-    artist: 'Pattern Integrity Films',
+    artist: 'Kung Fu Dork',
     album: 'Zora Video Coins',
     description: 'Behind the scenes look at the animation process for my first Rick and Morty promo between season 2 and season 3',
     stems: [],
@@ -1055,7 +1055,7 @@ export const ZORA_LIBRARY: TrackEntry[] = [
   {
     id: 'yaboynancy-pilot-episode-trailer',
     title: 'YABOYNANCY "Pilot" Episode Trailer',
-    artist: 'Pattern Integrity Films',
+    artist: 'YABOYNANCY',
     album: 'Zora Video Coins',
     description: '',
     stems: [],
@@ -1064,6 +1064,51 @@ export const ZORA_LIBRARY: TrackEntry[] = [
     ipfsCid: 'bafybeifjt7uzjuhprgw6dteip7n4hb3jb4hzguvdvnfognn66etlmdl3bm',
     ipfsImage: 'ipfs://bafybeibwezz763ohx3emkzjeqaieuhrdvuxbc7e6jyp72cosjiezthess4',
     collection: 'https://zora.co/coin/base:0x76476dc571376bc4edd51521b832e49af2253221',
+    royalty: 0,
+    mediaType: 'video',
+  },
+  {
+    id: 'the-based-500',
+    title: 'The Based 500',
+    artist: 'Pattern Integrity Films',
+    album: 'Zora Video Coins',
+    description: 'The Based 500 is a short documentary that captures the creative surge powering the next wave of blockchain culture. From developers and artists to entrepreneurs and community organizers, the film follows innovators who use Base as their canvas to turn bold ideas into on-chain reality.\n\nDirected and edited by @l2moongirl\nOriginal score by Will Smillie\nCinematography, assistant editor, color finishing and sound mastering by Pippin (@Pattern)',
+    stems: [],
+    coverPath: 'https://magic.decentralized-content.com/ipfs/bafybeigps7ij77fnc7oxwmosdqri3rmgpoym6a3q36vbamhksxetgbtina',
+    videoUrl: 'https://magic.decentralized-content.com/ipfs/bafybeih2llkad3uiltrlytcpmoqonohfnqtehweu4lthmwjx4hp2br7mdu',
+    ipfsCid: 'bafybeih2llkad3uiltrlytcpmoqonohfnqtehweu4lthmwjx4hp2br7mdu',
+    ipfsImage: 'ipfs://bafybeigps7ij77fnc7oxwmosdqri3rmgpoym6a3q36vbamhksxetgbtina',
+    collection: 'https://zora.co/coin/base:0x9d723104acc8365889731839797a7aa5e69cae87',
+    royalty: 0,
+    mediaType: 'video',
+  },
+  {
+    id: 'process-002-trailer-bootie-brown',
+    title: 'PROCESS 002 - Trailer - Bootie Brown',
+    artist: 'Pattern Integrity Films',
+    album: 'Zora Video Coins',
+    description: 'Ep 2 features Bootie Brown of Gorillaz & The Pharcyde: His story, process & a career spanning FIVE decades at the top of the music & dance industries. Originally premiered on 09.22.2023 on @PharcydeTV & in association with the GameStopNFT Marketplace. PROCESS 002 is coming to zora.',
+    stems: [],
+    coverPath: 'https://ipfs.io/ipfs/bafybeifk5geq3fuid6tkgk7zb2mx63bieqpzflupsurbfcbxnf2xuowfx4',
+    videoUrl: 'https://ipfs.io/ipfs/bafybeicem75ws7j2c43gzew7h33csidk5fps5efd4b6y64ejchlforutiu',
+    ipfsCid: 'bafybeicem75ws7j2c43gzew7h33csidk5fps5efd4b6y64ejchlforutiu',
+    ipfsImage: 'ipfs://bafybeifk5geq3fuid6tkgk7zb2mx63bieqpzflupsurbfcbxnf2xuowfx4',
+    collection: 'https://zora.co/coin/base:0x5a15a62c0917521dbcd3eca64fdb1d8ac467e423',
+    royalty: 0,
+    mediaType: 'video',
+  },
+  {
+    id: 'phtv-on-zora',
+    title: 'phTV on zora',
+    artist: 'Pattern Integrity Films',
+    album: 'Zora Video Coins',
+    description: "It's official: @bootiebrown's @pharcydetv is on zora. Livestreaming incoming.",
+    stems: [],
+    coverPath: 'https://ipfs.io/ipfs/bafybeidpaxau5umf33aiahje6z6nqmzoekzpzspdwn43opy6oinblo7sly',
+    videoUrl: 'https://ipfs.io/ipfs/bafybeibt55ulik2hovy3zkxmacysnhkmg4d4ojkbmzbbhhs3mzhsp2vniu',
+    ipfsCid: 'bafybeibt55ulik2hovy3zkxmacysnhkmg4d4ojkbmzbbhhs3mzhsp2vniu',
+    ipfsImage: 'ipfs://bafybeidpaxau5umf33aiahje6z6nqmzoekzpzspdwn43opy6oinblo7sly',
+    collection: 'https://zora.co/coin/base:0x1b630a4f144e81773f5af6b39e0fceb516baa25b',
     royalty: 0,
     mediaType: 'video',
   },
